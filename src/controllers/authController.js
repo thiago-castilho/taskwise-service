@@ -1,4 +1,5 @@
 const { login, createUser } = require('../services/authService');
+const usersRepo = require('../repositories/usersRepository');
 
 async function postLogin(req, res, next) {
 try {
@@ -18,7 +19,18 @@ res.status(201).json(user);
 
 async function getMe(req, res, next) {
 try {
-res.status(200).json(req.user);
+const user = usersRepo.findById(req.user.id);
+if (!user) {
+return res.status(404).json([{ code: 'NOT_FOUND', field: 'id', message: 'Usuário não encontrado' }]);
+}
+// Retorna dados do usuário sem passwordHash
+res.status(200).json({
+id: user.id,
+name: user.name,
+email: user.email,
+role: user.role,
+createdAt: user.createdAt,
+});
 } catch (e) { next(e); }
 }
 
