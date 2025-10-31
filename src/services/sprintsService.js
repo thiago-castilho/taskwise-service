@@ -14,7 +14,10 @@ return juniors * CAPACITY_BY_LEVEL.junior + plenos * CAPACITY_BY_LEVEL.pleno + s
 }
 
 function computeSprintTotals(sprint) {
-const tasks = sprint.taskIds.map(id => tRepo.findById(id)).filter(Boolean);
+// Busca tarefas e valida que realmente pertencem à sprint
+const tasks = sprint.taskIds
+  .map(id => tRepo.findById(id))
+  .filter(t => t && t.sprintId === sprint.id); // Garante que sprintId corresponde
 // Garante horas corretas mesmo se a task não tiver cache prévio
 const hours = tasks.reduce((acc, t) => {
   const totals = t?._totalsCache || computeTaskTotals(t.phases);
@@ -40,7 +43,11 @@ id: uuidv4(),
 name,
     taskIds: (Array.isArray(taskIds) ? taskIds : []).slice(),
 status: 'Created',
-capacity: capacity || { junior: 0, pleno: 0, senior: 0 },
+capacity: {
+  junior: capacity ? Number(capacity.junior || 0) : 0,
+  pleno: capacity ? Number(capacity.pleno || 0) : 0,
+  senior: capacity ? Number(capacity.senior || 0) : 0,
+},
 startedAt: null,
 closedAt: null,
 createdAt: toUtcIso(),
@@ -143,7 +150,10 @@ function summaryDashboard(sprintId) {
 const sprint = sRepo.findById(sprintId);
 if (!sprint) return null;
 const totals = computeSprintTotals(sprint);
-const tasks = sprint.taskIds.map(id => tRepo.findById(id)).filter(Boolean);
+// Busca tarefas e valida que realmente pertencem à sprint
+const tasks = sprint.taskIds
+  .map(id => tRepo.findById(id))
+  .filter(t => t && t.sprintId === sprintId); // Garante que sprintId corresponde
 const hoursDone = tasks.filter(t => t.status === 'Concluída')
 .reduce((a, t) => a + Number(t.totalHours || t._totalsCache?.totalHours || 0), 0);
 const progressoReal = totals.hours > 0 ? (hoursDone / totals.hours) * 100 : 0;
@@ -161,8 +171,10 @@ const blocked = tasks.filter(t => t.status === 'Bloqueada');
 	else if (progressoReal < progressoEsperado) statusSemaforo = 'Vermelho';
 	else if (progressoReal >= progressoEsperado && blocked.length > 0) statusSemaforo = 'Amarelo';
 
+// Contagem de tarefas por status - apenas tarefas válidas que realmente pertencem à sprint
 const countsByStatus = VALID_STATUSES.reduce((acc, s) => {
-acc[s] = tasks.filter(t => t.status === s).length; return acc;
+  acc[s] = tasks.filter(t => t && t.status === s && t.sprintId === sprintId).length;
+  return acc;
 }, {});
 
 const blockedList = blocked.map(b => ({
