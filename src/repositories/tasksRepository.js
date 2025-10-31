@@ -9,4 +9,9 @@ if (idx >= 0) tasks[idx] = task;
 return task;
 }
 
-module.exports = { listAll, findById, add, update };
+function remove(id) {
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx >= 0) tasks.splice(idx, 1);
+}
+
+module.exports = { listAll, findById, add, update, remove };

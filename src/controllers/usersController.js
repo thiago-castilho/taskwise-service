@@ -7,6 +7,20 @@ async function listAll(req, res, next) {
 	} catch (e) { next(e); }
 }
 
-module.exports = { listAll };
+async function listAvailable(req, res, next) {
+	try {
+		const users = usersRepo.list();
+		// Retorna apenas campos básicos, sem passwordHash
+		const publicUsers = users.map(u => ({
+			id: u.id,
+			name: u.name,
+			email: u.email,
+			role: u.role,
+		}));
+		return res.status(200).json({ items: publicUsers });
+	} catch (e) { next(e); }
+}
+
+module.exports = { listAll, listAvailable };
 
 

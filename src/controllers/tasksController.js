@@ -60,4 +60,12 @@ res.status(200).json(t);
 } catch (e) { next(e); }
 }
 
-module.exports = { create, list, getById, update, patchStatus, assign };
+async function remove(req, res, next) {
+try {
+const result = service.deleteTask(req.params.id);
+if (!result) return res.status(404).json([{ code: 'NOT_FOUND', field: 'id', message: 'Tarefa não encontrada' }]);
+return res.status(204).send();
+} catch (e) { next(e); }
+}
+
+module.exports = { create, list, getById, update, patchStatus, assign, remove };

@@ -53,4 +53,20 @@ res.status(200).json(summary);
 } catch (e) { next(e); }
 }
 
-module.exports = { create, setCapacity, start, close, list, getById, dashboardSummary };
+async function addTasks(req, res, next) {
+try {
+const sprint = service.addTasksToSprint(req.params.id, req.body?.taskIds || []);
+if (!sprint) return res.status(404).json([{ code: 'NOT_FOUND', field: 'id', message: 'Sprint não encontrada' }]);
+res.status(200).json(sprint);
+} catch (e) { next(e); }
+}
+
+async function removeTasks(req, res, next) {
+try {
+const sprint = service.removeTasksFromSprint(req.params.id, req.body?.taskIds || []);
+if (!sprint) return res.status(404).json([{ code: 'NOT_FOUND', field: 'id', message: 'Sprint não encontrada' }]);
+res.status(200).json(sprint);
+} catch (e) { next(e); }
+}
+
+module.exports = { create, setCapacity, start, close, list, getById, dashboardSummary, addTasks, removeTasks };

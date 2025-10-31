@@ -1,7 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
-const { toUtcIso, addBusinessDaysFromNextDay } = require('../utils/time');
+const { toUtcIso, addBusinessDaysFromNextDay, endOfWorkdayUtc } = require('../utils/time');
 const { computeTaskTotals } = require('../utils/pert');
 const tasksRepo = require('../repositories/tasksRepository');
+const sprintsRepo = require('../repositories/sprintsRepository');
 const usersRepo = require('../repositories/usersRepository');
 
 const VALID_STATUSES = ['Backlog', 'Em Andamento', 'Bloqueada', 'Concluída'];
@@ -15,7 +16,6 @@ const totals = computeTaskTotals(task.phases);
 task._totalsCache = totals;
 task.totalHours = totals.totalHours;
 task.totalDays = totals.totalDays;
-task.dueDate = computeDueDateForTask(task.createdAt, totals.totalDays);
 return task;
 }
 
@@ -36,7 +36,8 @@ risco: risco || null,
 complexidade: complexidade || null,
 createdBy: creatorId,
 };
-withTotals(task);
+  withTotals(task);
+  // dueDate só é definida quando status mudar para 'Em Andamento'
 tasksRepo.add(task);
 return task;
 }
@@ -70,10 +71,51 @@ if (payload.description !== undefined) task.description = payload.description;
 if (payload.phases !== undefined) {
 task.phases = payload.phases;
 withTotals(task);
+// Se a tarefa já está "Em Andamento" e tem dueDate, recalcula com nova estimativa
+if (task.status === 'Em Andamento' && task.dueDate) {
+  const days = Math.max(1, Math.round(Number(task.totalDays) || 1));
+  const target = computeDueDateForTask(toUtcIso(), days);
+  task.dueDate = endOfWorkdayUtc(target, 18, 0);
+}
 }
 if (payload.risco !== undefined) task.risco = payload.risco;
 if (payload.complexidade !== undefined) task.complexidade = payload.complexidade;
-if (payload.sprintId !== undefined) task.sprintId = payload.sprintId;
+  if (payload.sprintId !== undefined) {
+    const newSprintId = payload.sprintId || null;
+    // Exclusividade: não permitir reatribuir se já possui sprintId diferente
+    if (newSprintId && task.sprintId && task.sprintId !== newSprintId) {
+      const err = new Error('Tarefa já vinculada a outra sprint');
+      err.status = 409;
+      err.errors = [{ code: 'TASK_ALREADY_IN_SPRINT', field: 'sprintId', message: 'Remova da sprint atual antes de reatribuir' }];
+      throw err;
+    }
+    // Validar sprint destino existe
+    if (newSprintId) {
+      const sprint = sprintsRepo.findById(newSprintId);
+      if (!sprint) {
+        const err = new Error('Sprint destino inexistente');
+        err.status = 422;
+        err.errors = [{ code: 'SPRINT_NOT_FOUND', field: 'sprintId', message: 'Sprint informada não existe' }];
+        throw err;
+      }
+      // Garantir que a lista da sprint contenha a tarefa (sincronismo)
+      if (!sprint.taskIds.includes(task.id)) {
+        sprint.taskIds.push(task.id);
+        sprint.updatedAt = toUtcIso();
+        sprintsRepo.update(sprint);
+      }
+    }
+    // Se removendo sprintId, também remover da lista da sprint anterior
+    if (!newSprintId && task.sprintId) {
+      const prev = sprintsRepo.findById(task.sprintId);
+      if (prev) {
+        prev.taskIds = prev.taskIds.filter(tid => tid !== task.id);
+        prev.updatedAt = toUtcIso();
+        sprintsRepo.update(prev);
+      }
+    }
+    task.sprintId = newSprintId;
+  }
 task.updatedAt = toUtcIso();
 tasksRepo.update(task);
 return task;
@@ -99,12 +141,35 @@ function transitionStatus(taskId, newStatus, blockInfo) {
 const task = getTask(taskId);
 if (!task) return null;
 const from = task.status;
-if (!VALID_STATUSES.includes(newStatus)) {
+  if (!VALID_STATUSES.includes(newStatus)) {
 const err = new Error('Status inválido');
 err.status = 422;
 err.errors = [{ code: 'INVALID_STATUS', field: 'status', message: 'Status inválido' }];
 throw err;
 }
+  // Regra: tarefas sem sprintId só podem ter status Backlog
+  if (!task.sprintId && newStatus !== 'Backlog') {
+    const err = new Error('Tarefas sem sprint devem permanecer em Backlog');
+    err.status = 422;
+    err.errors = [{ code: 'STATUS_INVALID_FOR_TASK_WITHOUT_SPRINT', field: 'status', message: 'Altere para uma sprint antes de mudar o status' }];
+    throw err;
+  }
+  // Regra: não permitir alterar status se a sprint não foi iniciada
+  if (task.sprintId) {
+    const sprint = sprintsRepo.findById(task.sprintId);
+    if (!sprint) {
+      const err = new Error('Sprint da tarefa inexistente');
+      err.status = 422;
+      err.errors = [{ code: 'TASK_SPRINT_NOT_FOUND', field: 'sprintId', message: 'Sprint vinculada não existe' }];
+      throw err;
+    }
+    if (sprint.status !== 'Started') {
+      const err = new Error('Não é possível atualizar status: sprint não iniciada');
+      err.status = 409;
+      err.errors = [{ code: 'SPRINT_NOT_STARTED_FOR_TASK', field: 'sprint.status', message: 'Inicie a sprint para alterar status de tarefas' }];
+      throw err;
+    }
+  }
 // Regras de transição
 if (from === 'Backlog' && newStatus !== 'Em Andamento') invalidTransition();
 if (from === 'Em Andamento' && !['Bloqueada', 'Concluída'].includes(newStatus)) invalidTransition();
@@ -116,6 +181,18 @@ const err = new Error('Transição de status inválida');
 err.status = 422;
 err.errors = [{ code: 'INVALID_TRANSITION', field: 'status', message: `${from} -> ${newStatus}` }];
 throw err;
+}
+
+// deleteTask será declarado no escopo do módulo, fora desta função
+
+// Definir dueDate quando entrar em 'Em Andamento' (sempre recalcula)
+if (newStatus === 'Em Andamento') {
+  // garantir totals atualizados
+  withTotals(task);
+  // Garantir que totalDays seja um número válido
+  const days = Math.max(1, Math.round(Number(task.totalDays) || 1));
+  const target = computeDueDateForTask(toUtcIso(), days);
+  task.dueDate = endOfWorkdayUtc(target, 18, 0);
 }
 
 if (newStatus === 'Concluída') {
@@ -159,6 +236,21 @@ tasksRepo.update(task);
 return task;
 }
 
+function deleteTask(id) {
+const task = getTask(id);
+if (!task) return null;
+if (task.sprintId) {
+const sprint = sprintsRepo.findById(task.sprintId);
+if (sprint) {
+sprint.taskIds = sprint.taskIds.filter(tid => tid !== task.id);
+sprint.updatedAt = toUtcIso();
+sprintsRepo.update(sprint);
+}
+}
+tasksRepo.remove(id);
+return { id };
+}
+
 module.exports = {
 createTask,
 listTasks,
@@ -166,4 +258,5 @@ getTask,
 updateTask,
 setAssignee,
 transitionStatus,
+  deleteTask,
 };

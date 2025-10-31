@@ -35,7 +35,8 @@ const phaseHours = pert(o, m, p);
 totalHours += phaseHours;
 });
 const totalHoursRounded = round1(totalHours);
-const totalDaysRounded = round1(totalHoursRounded / PRODUCTIVE_HOURS_PER_DAY);
+// Dias úteis devem ser inteiros (arredonda para o inteiro mais próximo)
+const totalDaysRounded = Math.round(totalHoursRounded / PRODUCTIVE_HOURS_PER_DAY);
 return { totalHours: totalHoursRounded, totalDays: totalDaysRounded };
 }
 

@@ -6,6 +6,7 @@ const usersCtrl = require('../controllers/usersController');
 
 router.post('/', authCtrl.postUser);
 router.get('/', authRequired, requireAdmin, usersCtrl.listAll);
+router.get('/available', authRequired, usersCtrl.listAvailable);
 router.get('/me', authRequired, authCtrl.getMe);
 
 module.exports = router;
