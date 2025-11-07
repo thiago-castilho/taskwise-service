@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { sleep, check } from 'k6';
-import { getBaseUrl } from '../utils/variables.js';
+import { getBaseUrl } from '../test/utils/variables.js';
 const postLogin = JSON.parse(open('../fixtures/postLogin.json'));
 
 export const options = {
