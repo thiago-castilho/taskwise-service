@@ -1,5 +1,5 @@
 const request = require('supertest');
-const postLogin = require('../fixtures/postLogin.json');
+const postLogin = require('../fixtures/api/postLogin.json');
 
 const getToken = async (email, pass) => {
     const bodyLogin = { ...postLogin };

@@ -1,7 +1,7 @@
 const request = require('supertest');
 const { expect } = require('chai');
-const postUsers = require('../fixtures/postUsers.json');
-const { getToken } = require('../helpers/authentication');
+const postUsers = require('../../fixtures/api/postUsers.json');
+const { getToken } = require('../../helpers/authentication');
 require('dotenv').config();
 
 describe('Usuários - Gerenciamento de usuários do sistema', () => {

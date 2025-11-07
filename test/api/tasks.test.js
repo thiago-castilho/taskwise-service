@@ -1,7 +1,7 @@
 const request = require('supertest');
 const { expect } = require('chai');
-const { getToken } = require('../helpers/authentication');
-const postTasks = require('../fixtures/postTasks.json');
+const { getToken } = require('../../helpers/authentication');
+const postTasks = require('../../fixtures/api/postTasks.json');
 require('dotenv').config();
 
 describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
