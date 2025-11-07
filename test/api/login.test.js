@@ -1,6 +1,6 @@
 const request = require('supertest');
 const { expect } = require('chai');
-const postLogin = require('../../fixtures/api/postLogin.json');
+const postLogin = require('../fixtures/api/postLogin.json');
 require('dotenv').config();
 
 describe('Autenticação - Endpoints de autenticação e gerenciamento de sessão', () => {
