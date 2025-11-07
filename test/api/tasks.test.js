@@ -13,6 +13,7 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
                 .set('X-Timezone', 'America/Sao_Paulo')
                 .set('Authorization', `Bearer ${await getToken()}`);
 
+            expect(response.status).to.be.equal(200);
             expect(response.body).to.have.property('items');
             expect(response.body.items).to.be.an('array');
             expect(response.body.items).to.have.length.above(5);
@@ -39,6 +40,7 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
                 .set('X-Timezone', 'America/Sao_Paulo')
                 .set('Authorization', `Bearer ${await getToken('user@taskwise.local', 'user123')}`);
 
+            expect(response.status).to.be.equal(200);
             expect(response.body).to.have.property('items');
             expect(response.body.items).to.be.an('array');
             expect(response.body.items).to.have.length.above(5);
@@ -63,6 +65,7 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
                 .set('Content-Type', 'application/json')
                 .set('X-Timezone', 'America/Sao_Paulo')
 
+            expect(response.status).to.be.equal(401);
             expect(response.body).to.be.an('array');
             expect(response.body[0].code).to.be.equal('UNAUTHORIZED');
             expect(response.body[0].field).to.be.null;
@@ -71,7 +74,7 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
     });
 
     describe('POST /tasks - Criar tarefa', () => {
-        it('Deve retornar 201 e criar uma tarefa usando credenciais de administrador enviando somente dados requeridos', async() => {
+        it('Deve retornar 201 e criar uma tarefa usando credenciais de administrador enviando somente dados requeridos', async () => {
             const bodyTasks = { ...postTasks };
             const response = await request(process.env.BASE_URL)
                 .post('/tasks')
@@ -80,25 +83,52 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
                 .set('Authorization', `Bearer ${await getToken()}`)
                 .send(bodyTasks);
 
-                expect(response.status).to.be.equal(201);
-                expect(response.body).to.have.property('id');
-                expect(response.body).to.have.property('title').to.be.equal(bodyTasks.title);
-                expect(response.body).to.have.property('description').and.to.be.null;
-                expect(response.body).to.have.property('phases');
-                expect(response.body).to.have.property('status').to.be.equal("Backlog");
-                expect(response.body).to.have.property('assigneeId').and.to.be.null;
-                expect(response.body).to.have.property('block').and.to.be.null;
-                expect(response.body).to.have.property('createdAt').and.to.be.a('string');
-                expect(response.body).to.have.property('updatedAt').and.to.be.a('string');
-                expect(response.body).to.have.property('sprintId').and.to.be.null;
-                expect(response.body).to.have.property('risco').and.to.be.null;
-                expect(response.body).to.have.property('complexidade').and.to.be.null;
-                expect(response.body).to.have.property('createdBy').and.to.be.a('string');
-                expect(response.body).to.have.property('totalHours').and.to.be.a('number');
-                expect(response.body).to.have.property('totalDays').and.to.be.a('number');
-            });
+            expect(response.status).to.be.equal(201);
+            expect(response.body).to.have.property('id');
+            expect(response.body).to.have.property('title').to.be.equal(bodyTasks.title);
+            expect(response.body).to.have.property('description').and.to.be.null;
+            expect(response.body).to.have.property('phases');
+            expect(response.body).to.have.property('status').to.be.equal("Backlog");
+            expect(response.body).to.have.property('assigneeId').and.to.be.null;
+            expect(response.body).to.have.property('block').and.to.be.null;
+            expect(response.body).to.have.property('createdAt').and.to.be.a('string');
+            expect(response.body).to.have.property('updatedAt').and.to.be.a('string');
+            expect(response.body).to.have.property('sprintId').and.to.be.null;
+            expect(response.body).to.have.property('risco').and.to.be.null;
+            expect(response.body).to.have.property('complexidade').and.to.be.null;
+            expect(response.body).to.have.property('createdBy').and.to.be.a('string');
+            expect(response.body).to.have.property('totalHours').and.to.be.a('number');
+            expect(response.body).to.have.property('totalDays').and.to.be.a('number');
+        });
 
-        it('Deve retornar 201 e criar uma tarefa usando credenciais de usuário read/write enviando somente dados requeridos', async() => {
+        it('Deve retornar 201 e criar uma tarefa usando credenciais de usuário read/write enviando somente dados requeridos', async () => {
+            const bodyTasks = { ...postTasks };
+            const response = await request(process.env.BASE_URL)
+                .post('/tasks')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken('user@taskwise.local', 'user123')}`)
+                .send(bodyTasks);
+
+            expect(response.status).to.be.equal(201);
+            expect(response.body).to.have.property('id');
+            expect(response.body).to.have.property('title').to.be.equal(bodyTasks.title);
+            expect(response.body).to.have.property('description').and.to.be.null;
+            expect(response.body).to.have.property('phases');
+            expect(response.body).to.have.property('status').to.be.equal("Backlog");
+            expect(response.body).to.have.property('assigneeId').and.to.be.null;
+            expect(response.body).to.have.property('block').and.to.be.null;
+            expect(response.body).to.have.property('createdAt').and.to.be.a('string');
+            expect(response.body).to.have.property('updatedAt').and.to.be.a('string');
+            expect(response.body).to.have.property('sprintId').and.to.be.null;
+            expect(response.body).to.have.property('risco').and.to.be.null;
+            expect(response.body).to.have.property('complexidade').and.to.be.null;
+            expect(response.body).to.have.property('createdBy').and.to.be.a('string');
+            expect(response.body).to.have.property('totalHours').and.to.be.a('number');
+            expect(response.body).to.have.property('totalDays').and.to.be.a('number');
+        });
+
+        it('Deve retornar 401 e criar uma tarefa usando credenciais de administrador', async () => {
             const bodyTasks = { ...postTasks };
             const response = await request(process.env.BASE_URL)
                 .post('/tasks')
@@ -106,15 +136,92 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
                 .set('X-Timezone', 'America/Sao_Paulo')
                 .send(bodyTasks);
 
-                expect(response.status).to.be.equal(401);
-                expect(response.body).to.be.an('array');
+            expect(response.status).to.be.equal(401);
+            expect(response.body).to.be.an('array');
             expect(response.body[0].code).to.be.equal('UNAUTHORIZED');
             expect(response.body[0].field).to.be.null;
             expect(response.body[0].message).to.be.equal('Token ausente');
         });
+    });
 
-        it('Deve retornar 401 e criar uma tarefa usando credenciais de administrador', async() => {
+    describe('GET /tasks/{id} - Obter tarefa por id', () => {
+        it('Deve retornar 200 e a tarefa solicitada através de seu ID usando credenciais de administrador', async () => {
+            const taskId = "5b80d610-406d-4be6-a2f9-e0e6ddbcbdef";
+            const response = await request(process.env.BASE_URL)
+                .get(`/tasks/${taskId}`)
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken()}`);
 
+            expect(response.status).to.equal(200);
+            expect(response.body).to.have.property('id').to.be.a('string');
+            expect(response.body).to.have.property('title').to.be.equal('Caso de teste login');
+            expect(response.body).to.have.property('description').to.be.equal('Cobrir fluxos de login');
+            expect(response.body).to.have.property('phases').to.not.be.null;
+            expect(response.body).to.have.property('status').to.be.equal('Backlog');
+            expect(response.body).to.have.property('assigneeId').to.be.null;
+            expect(response.body).to.have.property('block').to.be.null;
+            expect(response.body).to.have.property('createdAt').to.not.be.null;
+            expect(response.body).to.have.property('updatedAt').to.not.be.null;
+            expect(response.body).to.have.property('sprintId').to.be.null;
+            expect(response.body).to.have.property('complexidade').to.be.equal('Média');
+            expect(response.body).to.have.property('risco').to.be.equal('Médio');
+            expect(response.body).to.have.property('totalHours').to.be.equal(4);
+            expect(response.body).to.have.property('totalDays').to.be.equal(1);
+        });
+
+        it('Deve retornar 200 e a tarefa solicitada através de seu ID usando credenciais de usuário read/write', async () => {
+            const taskId = "5b80d610-406d-4be6-a2f9-e0e6ddbcbdef";
+            const response = await request(process.env.BASE_URL)
+                .get(`/tasks/${taskId}`)
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken()}`);
+
+            expect(response.status).to.equal(200);
+            expect(response.body).to.have.property('id').to.be.a('string');
+            expect(response.body).to.have.property('title').to.be.equal('Caso de teste login');
+            expect(response.body).to.have.property('description').to.be.equal('Cobrir fluxos de login');
+            expect(response.body).to.have.property('phases').to.not.be.null;
+            expect(response.body).to.have.property('status').to.be.equal('Backlog');
+            expect(response.body).to.have.property('assigneeId').to.be.null;
+            expect(response.body).to.have.property('block').to.be.null;
+            expect(response.body).to.have.property('createdAt').to.not.be.null;
+            expect(response.body).to.have.property('updatedAt').to.not.be.null;
+            expect(response.body).to.have.property('sprintId').to.be.null;
+            expect(response.body).to.have.property('complexidade').to.be.equal('Média');
+            expect(response.body).to.have.property('risco').to.be.equal('Médio');
+            expect(response.body).to.have.property('totalHours').to.be.equal(4);
+            expect(response.body).to.have.property('totalDays').to.be.equal(1);
+        });
+
+        it('Deve retornar 400 e uma mensagem de erro ao passar um ID de task inválido', async () => {
+            const taskId = "5b80d610-406d-4be6-a2f9-e0e6ddbcbd4f";
+            const response = await request(process.env.BASE_URL)
+                .get(`/tasks/${taskId}`)
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken()}`);
+
+            expect(response.status).to.equal(404);
+            expect(response.body).to.be.an('array');
+            expect(response.body[0].code).to.be.equal('NOT_FOUND');
+            expect(response.body[0].field).to.be.equal('id');
+            expect(response.body[0].message).to.be.equal('Tarefa não encontrada');
+        });
+
+        it('Deve retornar 401 e uma mensagem de erro se não autenticado', async () => {
+            const taskId = "5b80d610-406d-4be6-a2f9-e0e6ddbcbd4f";
+            const response = await request(process.env.BASE_URL)
+                .get(`/tasks/${taskId}`)
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+
+            expect(response.status).to.equal(401);
+            expect(response.body).to.be.an('array');
+            expect(response.body[0].code).to.be.equal('UNAUTHORIZED');
+            expect(response.body[0].field).to.be.null;
+            expect(response.body[0].message).to.be.equal('Token ausente');
         });
     });
 });
