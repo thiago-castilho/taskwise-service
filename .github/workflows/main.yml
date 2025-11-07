@@ -17,7 +17,7 @@ jobs:
         run: npm install
 
       - name: Iniciando o servidor da aplicação
-        run: npm start
+        run: npm start &
 
       - name: Executando os testes com mocha
         run: npm test
