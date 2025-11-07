@@ -149,7 +149,7 @@ describe('Usuários - Gerenciamento de usuários do sistema', () => {
             expect(response.body.createdAt).to.not.be.null;
         });
 
-        it.only('Deve retornar 401 com mensagem de não autorizado se não autenticado', async () => {
+        it('Deve retornar 401 com mensagem de não autorizado se não autenticado', async () => {
             const response = await request(process.env.BASE_URL)
                 .get('/users/available')
                 .set('Content-Type', 'application/json')
