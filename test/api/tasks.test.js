@@ -146,7 +146,7 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
 
     describe('GET /tasks/{id} - Obter tarefa por id', () => {
         it('Deve retornar 200 e a tarefa solicitada através de seu ID usando credenciais de administrador', async () => {
-            const taskId = "5b80d610-406d-4be6-a2f9-e0e6ddbcbdef";
+            const taskId = "b233a64e-d1f6-450c-b7ec-9aaab2620bc4";
             const response = await request(process.env.BASE_URL)
                 .get(`/tasks/${taskId}`)
                 .set('Content-Type', 'application/json')
@@ -171,12 +171,12 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
         });
 
         it('Deve retornar 200 e a tarefa solicitada através de seu ID usando credenciais de usuário read/write', async () => {
-            const taskId = "5b80d610-406d-4be6-a2f9-e0e6ddbcbdef";
+            const taskId = "b233a64e-d1f6-450c-b7ec-9aaab2620bc4";
             const response = await request(process.env.BASE_URL)
                 .get(`/tasks/${taskId}`)
                 .set('Content-Type', 'application/json')
                 .set('X-Timezone', 'America/Sao_Paulo')
-                .set('Authorization', `Bearer ${await getToken()}`);
+                .set('Authorization', `Bearer ${await getToken('user@taskwise.local', 'user123')}`);
 
             expect(response.status).to.equal(200);
             expect(response.body).to.have.property('id').to.be.a('string');
