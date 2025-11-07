@@ -84,4 +84,39 @@ describe('Usuários - Gerenciamento de usuários do sistema', () => {
             expect(response.body[0].message).to.equal('Token inválido');
         });
     });
+
+    describe('GET /users/available - Listar usuários disponíveis (para seleção de responsáveis)', () => {
+        it('Deve retornar 200 e uma lista de usuários disponíveis com autenticação de administrador', async () => {
+            const response = await request(process.env.BASE_URL)
+                .get('/users/available')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken()}`);
+            expect(response.body.items).to.be.an('array');
+            expect(response.body.items).to.have.length.above(1);
+        });
+
+        it('Deve retornar 200 e uma lista de usuários disponíveis com autenticação de usuário read/write', async () => {
+            const response = await request(process.env.BASE_URL)
+                .get('/users/available')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken('user@taskwise.local', 'user123')}`);
+
+            expect(response.body.items).to.be.an('array');
+            expect(response.body.items).to.have.length.above(1);
+        });
+
+        it('Deve retornar 401 com mensagem de não autorizado se não autenticado', async () => {
+            const response = await request(process.env.BASE_URL)
+                .get('/users/available')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+
+            expect(response.body).to.be.an('array');
+            expect(response.body[0].code).to.be.equal('UNAUTHORIZED');
+            expect(response.body[0].field).to.be.null;
+            expect(response.body[0].message).to.be.equal('Token ausente');
+        });
+    });
 });
