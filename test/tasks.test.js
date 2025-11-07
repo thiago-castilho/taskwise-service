@@ -1,6 +1,7 @@
 const request = require('supertest');
 const { expect } = require('chai');
 const { getToken } = require('../helpers/authentication');
+const postTasks = require('../fixtures/postTasks.json');
 require('dotenv').config();
 
 describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
@@ -66,6 +67,54 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
             expect(response.body[0].code).to.be.equal('UNAUTHORIZED');
             expect(response.body[0].field).to.be.null;
             expect(response.body[0].message).to.be.equal('Token ausente');
+        });
+    });
+
+    describe('POST /tasks - Criar tarefa', () => {
+        it('Deve retornar 201 e criar uma tarefa usando credenciais de administrador enviando somente dados requeridos', async() => {
+            const bodyTasks = { ...postTasks };
+            const response = await request(process.env.BASE_URL)
+                .post('/tasks')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken()}`)
+                .send(bodyTasks);
+
+                expect(response.status).to.be.equal(201);
+                expect(response.body).to.have.property('id');
+                expect(response.body).to.have.property('title').to.be.equal(bodyTasks.title);
+                expect(response.body).to.have.property('description').and.to.be.null;
+                expect(response.body).to.have.property('phases');
+                expect(response.body).to.have.property('status').to.be.equal("Backlog");
+                expect(response.body).to.have.property('assigneeId').and.to.be.null;
+                expect(response.body).to.have.property('block').and.to.be.null;
+                expect(response.body).to.have.property('createdAt').and.to.be.a('string');
+                expect(response.body).to.have.property('updatedAt').and.to.be.a('string');
+                expect(response.body).to.have.property('sprintId').and.to.be.null;
+                expect(response.body).to.have.property('risco').and.to.be.null;
+                expect(response.body).to.have.property('complexidade').and.to.be.null;
+                expect(response.body).to.have.property('createdBy').and.to.be.a('string');
+                expect(response.body).to.have.property('totalHours').and.to.be.a('number');
+                expect(response.body).to.have.property('totalDays').and.to.be.a('number');
+            });
+
+        it('Deve retornar 201 e criar uma tarefa usando credenciais de usuário read/write enviando somente dados requeridos', async() => {
+            const bodyTasks = { ...postTasks };
+            const response = await request(process.env.BASE_URL)
+                .post('/tasks')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .send(bodyTasks);
+
+                expect(response.status).to.be.equal(401);
+                expect(response.body).to.be.an('array');
+            expect(response.body[0].code).to.be.equal('UNAUTHORIZED');
+            expect(response.body[0].field).to.be.null;
+            expect(response.body[0].message).to.be.equal('Token ausente');
+        });
+
+        it('Deve retornar 401 e criar uma tarefa usando credenciais de administrador', async() => {
+
         });
     });
 });
