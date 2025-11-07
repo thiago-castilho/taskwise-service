@@ -1,7 +1,7 @@
 name: CI Taskwise Service
 
 on:
-  deployment:
+  workflow_dispatch:    
 
 jobs: 
   tests:
