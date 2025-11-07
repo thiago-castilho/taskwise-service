@@ -242,4 +242,64 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
             expect(response.body[0].message).to.be.equal('Token ausente');
         });
     });
+
+    describe('DELETE /tasks/{id} - Excluir tarefa (Admin)', () => {
+
+        it('Deve retornar 204 e excluir uma tarefa usando credenciais de administrador', async () => {
+            const token = await getToken();
+            const bodyTasks = { ...postTasks };
+
+            const responseTaskCreated = await request(process.env.BASE_URL)
+                .post('/tasks')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${token}`)
+                .send(bodyTasks);
+            const taskId = responseTaskCreated.body.id;
+
+            const response = await request(process.env.BASE_URL)
+                .delete(`/tasks/${taskId}`)
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${token}`);
+
+
+        });
+
+        it('Deve retornar 403 e mostrar mensagem de erro ao usar credenciais de usuário read/write', async () => {
+            const token = await getToken('user@taskwise.local', 'user123');
+            const bodyTasks = { ...postTasks };
+
+            const responseTaskCreated = await request(process.env.BASE_URL)
+                .post('/tasks')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${token}`)
+                .send(bodyTasks);
+            const taskId = responseTaskCreated.body.id;
+
+            const response = await request(process.env.BASE_URL)
+                .delete(`/tasks/${taskId}`)
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(response.status).to.be.equal(403);
+            expect(response.body).to.be.an('array');
+            expect(response.body[0].code).to.be.equal('FORBIDDEN');
+            expect(response.body[0].field).to.be.null;
+            expect(response.body[0].message).to.be.equal('Acesso restrito a Admin');
+        });
+
+        it('Deve retornar 401 e mostrar mensagem de erro se não autenticado', async () => {
+
+            const response = await request(process.env.BASE_URL)
+                .delete('/tasks/fe00fe2c-0b69-4ddf-a57d-27e052d3ef2a')
+                .set('X-Timezone', 'America/Sao_Paulo')
+
+            expect(response.status).to.be.equal(401);
+            expect(response.body).to.be.an('array');
+            expect(response.body[0].code).to.be.equal('UNAUTHORIZED');
+            expect(response.body[0].field).to.be.null;
+            expect(response.body[0].message).to.be.equal('Token ausente');
+        });
+    });
 });
