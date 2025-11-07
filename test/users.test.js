@@ -119,4 +119,46 @@ describe('Usuários - Gerenciamento de usuários do sistema', () => {
             expect(response.body[0].message).to.be.equal('Token ausente');
         });
     });
+
+    describe('GET /users/me - Dados do usuário autenticado', () => {
+        it('Deve retornar 200 e as informações do usuário com autenticação de administrador', async () => {
+            const response = await request(process.env.BASE_URL)
+                .get('/users/me')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken()}`);
+
+            expect(response.body.id).to.be.a('string').and.not.null;
+            expect(response.body.name).to.be.equal('Admin');
+            expect(response.body.email).to.be.equal('admin@taskwise.local');
+            expect(response.body.role).to.be.equal('Admin');
+            expect(response.body.createdAt).to.not.be.null;
+        });
+
+        it('Deve retornar 200 e as informações do usuário com autenticação de read/write', async () => {
+            const response = await request(process.env.BASE_URL)
+                .get('/users/me')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${await getToken('user@taskwise.local', 'user123')}`);
+
+            expect(response.body.id).to.be.a('string').and.not.null;
+            expect(response.body.name).to.be.equal('Usuário RW');
+            expect(response.body.email).to.be.equal('user@taskwise.local');
+            expect(response.body.role).to.be.equal('ReadWrite');
+            expect(response.body.createdAt).to.not.be.null;
+        });
+
+        it.only('Deve retornar 401 com mensagem de não autorizado se não autenticado', async () => {
+            const response = await request(process.env.BASE_URL)
+                .get('/users/available')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+
+            expect(response.body).to.be.an('array');
+            expect(response.body[0].code).to.be.equal('UNAUTHORIZED');
+            expect(response.body[0].field).to.be.null;
+            expect(response.body[0].message).to.be.equal('Token ausente');
+        });
+    });
 });
