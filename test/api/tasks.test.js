@@ -146,17 +146,26 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
 
     describe('GET /tasks/{id} - Obter tarefa por id', () => {
         it('Deve retornar 200 e a tarefa solicitada através de seu ID usando credenciais de administrador', async () => {
-            const taskId = "b233a64e-d1f6-450c-b7ec-9aaab2620bc4";
+            const token = await getToken();
+            const bodyTasks = { ...postTasks };
+
+            const responseTaskCreated = await request(process.env.BASE_URL)
+                .post('/tasks')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${token}`)
+                .send(bodyTasks);
+            const taskId = responseTaskCreated.body.id;
             const response = await request(process.env.BASE_URL)
                 .get(`/tasks/${taskId}`)
                 .set('Content-Type', 'application/json')
                 .set('X-Timezone', 'America/Sao_Paulo')
-                .set('Authorization', `Bearer ${await getToken()}`);
+                .set('Authorization', `Bearer ${token}`);
 
             expect(response.status).to.equal(200);
             expect(response.body).to.have.property('id').to.be.a('string');
-            expect(response.body).to.have.property('title').to.be.equal('Caso de teste login');
-            expect(response.body).to.have.property('description').to.be.equal('Cobrir fluxos de login');
+            expect(response.body).to.have.property('title').to.be.equal('Tarefa criada por automação');
+            expect(response.body).to.have.property('description').to.be.null;
             expect(response.body).to.have.property('phases').to.not.be.null;
             expect(response.body).to.have.property('status').to.be.equal('Backlog');
             expect(response.body).to.have.property('assigneeId').to.be.null;
@@ -164,24 +173,33 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
             expect(response.body).to.have.property('createdAt').to.not.be.null;
             expect(response.body).to.have.property('updatedAt').to.not.be.null;
             expect(response.body).to.have.property('sprintId').to.be.null;
-            expect(response.body).to.have.property('complexidade').to.be.equal('Média');
-            expect(response.body).to.have.property('risco').to.be.equal('Médio');
-            expect(response.body).to.have.property('totalHours').to.be.equal(4);
+            expect(response.body).to.have.property('complexidade').to.be.null;
+            expect(response.body).to.have.property('risco').to.be.null;
+            expect(response.body).to.have.property('totalHours').to.be.equal(8);
             expect(response.body).to.have.property('totalDays').to.be.equal(1);
         });
 
         it('Deve retornar 200 e a tarefa solicitada através de seu ID usando credenciais de usuário read/write', async () => {
-            const taskId = "b233a64e-d1f6-450c-b7ec-9aaab2620bc4";
+            const token = await getToken('user@taskwise.local', 'user123');
+            const bodyTasks = { ...postTasks };
+
+            const responseTaskCreated = await request(process.env.BASE_URL)
+                .post('/tasks')
+                .set('Content-Type', 'application/json')
+                .set('X-Timezone', 'America/Sao_Paulo')
+                .set('Authorization', `Bearer ${token}`)
+                .send(bodyTasks);
+            const taskId = responseTaskCreated.body.id;
             const response = await request(process.env.BASE_URL)
                 .get(`/tasks/${taskId}`)
                 .set('Content-Type', 'application/json')
                 .set('X-Timezone', 'America/Sao_Paulo')
-                .set('Authorization', `Bearer ${await getToken('user@taskwise.local', 'user123')}`);
+                .set('Authorization', `Bearer ${token}`);
 
             expect(response.status).to.equal(200);
             expect(response.body).to.have.property('id').to.be.a('string');
-            expect(response.body).to.have.property('title').to.be.equal('Caso de teste login');
-            expect(response.body).to.have.property('description').to.be.equal('Cobrir fluxos de login');
+            expect(response.body).to.have.property('title').to.be.equal('Tarefa criada por automação');
+            expect(response.body).to.have.property('description').to.be.null;
             expect(response.body).to.have.property('phases').to.not.be.null;
             expect(response.body).to.have.property('status').to.be.equal('Backlog');
             expect(response.body).to.have.property('assigneeId').to.be.null;
@@ -189,9 +207,9 @@ describe('Tarefas - Operações relacionadas a tarefas de teste', () => {
             expect(response.body).to.have.property('createdAt').to.not.be.null;
             expect(response.body).to.have.property('updatedAt').to.not.be.null;
             expect(response.body).to.have.property('sprintId').to.be.null;
-            expect(response.body).to.have.property('complexidade').to.be.equal('Média');
-            expect(response.body).to.have.property('risco').to.be.equal('Médio');
-            expect(response.body).to.have.property('totalHours').to.be.equal(4);
+            expect(response.body).to.have.property('complexidade').to.be.null;
+            expect(response.body).to.have.property('risco').to.be.null;
+            expect(response.body).to.have.property('totalHours').to.be.equal(8);
             expect(response.body).to.have.property('totalDays').to.be.equal(1);
         });
 
